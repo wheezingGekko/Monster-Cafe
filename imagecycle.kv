@@ -1,0 +1,26 @@
+#:kivy 1.10.1
+#:import math math
+
+<AnimatedImage>:
+    pos: self.x, self.y
+    texture: self.texture
+    source: 'Images\\chars\\{}\\{}_{}_anim_f{}.png'.format(self.image_name, self.image_name, self.image_state, self.image_num)
+
+<ImageCycleExample>:
+    monsterImage: monster
+    otherMonsterImage: otherMonster
+    storeFloor: sFloor
+
+    Floor:
+        id: sFloor
+        width: self.parent.width
+        height: self.parent.height
+
+    AnimatedImage:
+        id: monster
+        center: self.parent.center
+        image_name: 'big_zombie'
+
+    AnimatedImage:
+        id: otherMonster
+        image_name: 'big_demon'
