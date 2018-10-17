@@ -10,17 +10,36 @@
     monsterImage: monster
     otherMonsterImage: otherMonster
     storeFloor: sFloor
+    storeCounter: sCounter
 
     Floor:
         id: sFloor
         width: self.parent.width
         height: self.parent.height
+        pos_hint: 0,0
+
+    Counter:
+        id: sCounter
+        width: self.parent.width
+        height: self.parent.height
+        canvas.before:
+            Color:
+                rgba: 0, 1, 0, 1
+        Image:
+            pos_hint: {'x': 0, 'y': 0}
+            size_hint: 0.5, 0.5
+            source: 'Images\\bg\\wall_column_top.png'
+
 
     AnimatedImage:
         id: monster
         center: self.parent.center
+        pos_hint: 0, 0
         image_name: 'big_zombie'
 
-    AnimatedImage:
+    WalkingCharacter:
         id: otherMonster
+        pos: self.x, self.y
+        right: self.parent.width / 2
+        top: (self.parent.height/ 2) + 0.2
         image_name: 'big_demon'
