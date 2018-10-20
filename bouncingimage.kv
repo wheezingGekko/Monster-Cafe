@@ -1,0 +1,15 @@
+#:kivy 1.10.1
+
+<AnimatedItem>:
+    source: 'Images/food/{}.png'.format(self.item_name)
+    width: 40
+    size_hint_y: None
+    allow_stretch: True
+
+<AnimatedItemBG>:
+    aApple: apple
+
+    AnimatedItem:
+        id: apple
+        item_name: "Apple"
+        center: self.parent.center
