@@ -10,26 +10,12 @@
     monsterImage: monster
     otherMonsterImage: otherMonster
     storeFloor: sFloor
-    storeCounter: sCounter
 
     Floor:
         id: sFloor
         width: self.parent.width
         height: self.parent.height
         pos_hint: 0,0
-
-    Counter:
-        id: sCounter
-        width: self.parent.width
-        height: self.parent.height
-        canvas.before:
-            Color:
-                rgba: 0, 1, 0, 1
-        Image:
-            pos_hint: {'x': 0, 'y': 0}
-            size_hint: 0.5, 0.5
-            source: 'Images\\bg\\wall_column_top.png'
-
 
     AnimatedImage:
         id: monster
