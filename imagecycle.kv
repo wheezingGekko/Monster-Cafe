@@ -1,10 +1,21 @@
 #:kivy 1.10.1
 #:import math math
 
-<AnimatedImage>:
+<OverlappingImage>:
+    keep_data: True
+
+<LoopingImage>:
     pos: self.x, self.y
+    source: 'Images\\chars\\{}\\{}_idle_anim_f{}.png'.format(self.image_name, self.image_name, self.image_num)
     texture: self.texture
+
+<Character>:
+    image_state: "idle"
     source: 'Images\\chars\\{}\\{}_{}_anim_f{}.png'.format(self.image_name, self.image_name, self.image_state, self.image_num)
+    width: self.DESIRED_WIDTH
+    size_hint_y: None
+    allow_stretch: True
+    keep_ratio: True
 
 <ImageCycleExample>:
     monsterImage: monster
@@ -17,13 +28,13 @@
         height: self.parent.height
         pos_hint: 0,0
 
-    AnimatedImage:
+    PlayerCharacter:
         id: monster
         center: self.parent.center
         pos_hint: 0, 0
         image_name: 'big_zombie'
 
-    WalkingCharacter:
+    NonPlayerCharacter:
         id: otherMonster
         pos: self.x, self.y
         right: self.parent.width / 2
