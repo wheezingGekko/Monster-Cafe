@@ -10,16 +10,18 @@
     texture: self.texture
 
 <Character>:
+    image_name: "big_zombie"
     image_state: "idle"
     source: 'Images\\chars\\{}\\{}_{}_anim_f{}.png'.format(self.image_name, self.image_name, self.image_state, self.image_num)
-    width: self.DESIRED_WIDTH
+    width: self.width
     size_hint_y: None
     allow_stretch: True
     keep_ratio: True
 
-<ImageCycleExample>:
+<MonsterCafe>:
     monsterImage: monster
     otherMonsterImage: otherMonster
+    ootherMonsterImage: ootherMonster
     storeFloor: sFloor
 
     Floor:
@@ -32,7 +34,7 @@
         id: monster
         center: self.parent.center
         pos_hint: 0, 0
-        image_name: 'big_zombie'
+        image_name: 'wizzard_m'
 
     NonPlayerCharacter:
         id: otherMonster
@@ -40,3 +42,10 @@
         right: self.parent.width / 2
         top: (self.parent.height/ 2) + 0.2
         image_name: 'big_demon'
+
+    NonPlayerCharacter:
+        id: ootherMonster
+        pos: self.x, self.y
+        right: self.parent.width / 2
+        top: (self.parent.height/ 2) + 5
+        image_name: 'skelet'
