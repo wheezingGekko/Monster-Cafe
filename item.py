@@ -10,7 +10,11 @@ from kivy.uix.image import Image
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.clock import Clock
 
-class AnimatedItem(Image):
+import random
+
+from imagelib import OverlappingImage, FloatingImage
+
+class Item(OverlappingImage, FloatingImage):
     CYCLE_SPEED = 5
     CYCLE_LENGTH = 10
     UP = 1
@@ -18,32 +22,27 @@ class AnimatedItem(Image):
 
     item_name = StringProperty('')
 
-    # image stretched because of how tiny the sprites are
-    def __init__(self, **kwargs):
-        super(AnimatedItem, self).__init__(**kwargs)
-        self.image_num = 0
-        self.movement_direction = self.UP
 
-    def update(self):
-        self.image_num = (self.image_num + 1) % self.CYCLE_LENGTH
+class ItemBag(object):
 
-        if self.image_num == 0:
-            self.movement_direction = -self.movement_direction
+    def __init__(self):
+        self.items = []
 
-        self.y += self.movement_direction
 
-class AnimatedItemBG(Widget):
-    aApple = ObjectProperty(None)
+    def add_item(self, item_name):
+        self.items.append(item_name)
 
-    def update(self, dt):
-        self.aApple.update()
 
-class BouncingImageApp(App):
-    def build(self):
-        itemExample = AnimatedItemBG()
-        Clock.schedule_interval(itemExample.update, 2.0/60.0)
-        return itemExample
+    def delete_item(self, item_name):
+        if self.has_item(item_name):
+            return True
+        return False
 
-if __name__ == '__main__':
-    BouncingImageApp().run()
+    
+    def has_item(self, item_name):
+        return (item_name in self.items)
 
+
+    def print_items(self):
+        for i in self.items:
+            print (i)

@@ -1,5 +1,6 @@
 #:kivy 1.10.1
 #:import math math
+#:include bouncingimage.kv
 
 <OverlappingImage>:
     keep_data: True
@@ -19,33 +20,34 @@
     keep_ratio: True
 
 <MonsterCafe>:
-    monsterImage: monster
-    otherMonsterImage: otherMonster
-    ootherMonsterImage: ootherMonster
+    player: monster
+    # otherMonsterImage: otherMonster
+    # ootherMonsterImage: ootherMonster
     storeFloor: sFloor
-
+    
     Floor:
         id: sFloor
         width: self.parent.width
         height: self.parent.height
         pos_hint: 0,0
 
+    # NonPlayerCharacter:
+    #     id: otherMonster
+    #     pos: self.x, self.y
+    #     right: self.parent.width / 2
+    #     top: (self.parent.height/ 2) + 0.2
+    #     image_name: 'big_demon'
+
+    # NonPlayerCharacter:
+    #     id: ootherMonster
+    #     pos: self.x, self.y
+    #     right: self.parent.width / 2
+    #     top: (self.parent.height/ 2) + 5
+    #     image_name: 'skelet'
+
     PlayerCharacter:
         id: monster
-        center: self.parent.center
+        right: self.parent.width / 2
         pos_hint: 0, 0
-        image_name: 'wizzard_m'
-
-    NonPlayerCharacter:
-        id: otherMonster
-        pos: self.x, self.y
-        right: self.parent.width / 2
-        top: (self.parent.height/ 2) + 0.2
         image_name: 'big_demon'
-
-    NonPlayerCharacter:
-        id: ootherMonster
-        pos: self.x, self.y
-        right: self.parent.width / 2
-        top: (self.parent.height/ 2) + 5
-        image_name: 'skelet'
+        width: self.width

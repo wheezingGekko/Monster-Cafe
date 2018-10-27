@@ -6,22 +6,96 @@ from kivy.properties import NumericProperty, StringProperty
 
 import math
 
+from debugger import Debug
+
+# TODO  When searching for the colored pixel, use binary search algo for 
+#       optimization
+#
+# TODO  Possibly make an all-around function encapsulating the search for
+#       the non-transparent pixel beginning
+
 
 class OverlappingImage(Image):
     ''' Class handling images that can sense if another image is 
     overlapping it 
     '''
+
+    STRETCH = 1
     
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+    def _init_transparency(self):
+        self.left_pad = self._find_left_pixel() * self.STRETCH
+        self.right_pad = self._find_right_pixel() * self.STRETCH
+        self.top_pad = self._find_top_pixel() * self.STRETCH
+
+
+    def _find_left_pixel(self):
+        true_left = self._coreimage.width
+
+        for y in range(self._coreimage.height):
+            for x in range(self._coreimage.width):
+                if (self._coreimage.read_pixel(x, y)[-1] > 0.5
+                        and x < true_left):
+                    true_left = x
+                    continue
+        return true_left
+
+
+    def _find_right_pixel(self):
+        true_right = -1
+
+        for y in range(self._coreimage.height):
+            for x in range(self._coreimage.width - 1, -1, -1):
+                if (self._coreimage.read_pixel(x, y)[-1] > 0.5
+                        and x > true_right):
+                    true_right = x
+                    continue
+        return self._coreimage.width - true_right
+
+ 
+    def _find_top_pixel(self):
+        true_top = -1
+
+        for x in range(self._coreimage.width):
+            for y in range(self._coreimage.height - 1, -1, -1):
+                if (self._coreimage.read_pixel(x, y)[-1] > 0.5
+                        and y > true_top):
+                    true_top = y
+                    continue
+                elif (self._coreimage.read_pixel(x, y)[-1] > 0.5
+                        and y <= true_top):
+                    break
+        return self._coreimage.height - true_top
+
+
     def _in_widget_horizontal(self, widget):
-        ''' returns true or false if within a widget's x-axis' '''
-        return (widget.x <= self.x < widget.right 
-                or widget.x <= self.right < widget.right)
+        ''' returns true or false if within a widget's x-axis '''
+        widget_left = widget.x + widget.left_pad
+        widget_right = widget.right - widget.right_pad
+        self_left = self.x + self.left_pad
+        self_right = self.right - self.right_pad
+
+        overlapping_right = widget_left <= self_left < widget_right
+        overlapping_left = widget_left <= self_right < widget_right
+        overlapping_on = (self_right > widget_right 
+                             and self_left < widget_left)
+
+        return (overlapping_right or overlapping_left or overlapping_on)
 
 
     def _in_widget_vertical(self, widget):
         ''' returns true or false if within a widget's y-axis '''
-        return (widget.y <= self.y < widget.top 
-                or widget.y <= self.top < widget.top)
+        widget_top = widget.top - widget.top_pad
+        self_top = self.top - self.top_pad
+
+        overlapping_above = widget.y <= self.y < widget_top
+        overlapping_below = widget.y <= self_top < widget_top
+        overlapping_on = (self.y < widget.y and self_top > widget_top)
+
+        return (overlapping_above or overlapping_below or overlapping_on)
 
 
     def _calculate_range(self, widget, axis, mini, maxa):
@@ -38,14 +112,18 @@ class OverlappingImage(Image):
         '''
         # retrieve the values of _coreimage because we can only
         # retrieve pixel color from the original image
-        self_axis = getattr(self, axis)
-        self_core_axis = getattr(self._coreimage, axis)
-        widget_core_axis = getattr(self._coreimage, axis)
+        try:
+            self_axis = getattr(self, axis)
+            self_core_axis = getattr(self._coreimage, axis)
+            widget_core_axis = getattr(self._coreimage, axis)
 
-        self_min = getattr(self, mini)
-        self_max = getattr(self, maxa)
-        widget_min = getattr(widget, mini)
-        widget_max = getattr(widget, maxa)
+            self_min = getattr(self, mini)
+            self_max = getattr(self, maxa)
+            widget_min = getattr(widget, mini)
+            widget_max = getattr(widget, maxa)
+        except AttributeError:
+            Debug.debugPrint(self, "_calculate_range", "Attribute Error")
+            return None
 
         # initial values are based on the most optimal situation:
         # when the widgets are directly on top of each other
@@ -74,7 +152,7 @@ class OverlappingImage(Image):
         # or horizontally, then we ignore the stretching of the image
         if step != 0:
             # without dividing it by some constant, we don't recognize
-            # that the image is streetched
+            # that the image is stretched
             axis_stretch = math.floor((self_axis - self_core_axis)/1.4)
             if start > 0:
                 start -= axis_stretch
@@ -97,8 +175,13 @@ class OverlappingImage(Image):
             right, a pixel to the left of this widget will be on the 
             other widget's right 
         '''
-        self_axis = getattr(self._coreimage, axis)
-        widget_axis = getattr(widget._coreimage, axis)
+        try:
+            self_axis = getattr(self._coreimage, axis)
+            widget_axis = getattr(widget._coreimage, axis)
+        except AttributeError:
+            Debug.debugPrint(self, "_calculate_axis_pixels", 
+                             "Attribute Error")
+            return None
 
         self_axis_pixel, widget_axis_pixel = i, i
 
@@ -120,6 +203,10 @@ class OverlappingImage(Image):
             return None
         
         return (self_axis_pixel, widget_axis_pixel)
+
+
+    def build(self):
+        self._init_transparency()
 
 
     def is_overlapping(self, widget):
@@ -163,10 +250,31 @@ class LoopingImage(Image):
     image_num = NumericProperty(0)
 
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
-    def updateImage(self):
+    def update_image(self):
         ''' moves image to next image state via number suffixes of the file '''
         self.image_num = (self.image_num + 1) % self.CYCLE_LENGTH
+
+
+class FloatingImage(Image):
+
+    CYCLE_SPEED = 5
+    CYCLE_LENGTH = 10
+    UP = 1
+    DOWN = -1
+
+    item_name = StringProperty('')
+
+    # image stretched because of how tiny the sprites are
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.image_num = 0
+        self.movement_direction = self.UP
+
+
+    def update_image(self):
+        self.image_num = (self.image_num + 1) % self.CYCLE_LENGTH
+
+        if self.image_num == 0:
+            self.movement_direction = -self.movement_direction
+
+        self.y += self.movement_direction
