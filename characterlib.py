@@ -44,8 +44,8 @@ class Character(LoopingImage, OverlappingImage):
         return new_offset
 
 
-class NonPlayerCharacter(Character):
-    ''' class handling all non-player controlled characters '''
+class NonPlayerCharacterImage(Character):
+    ''' class handling all non-player controlled characters' animation '''
     def set_patrol(self, movement_list):
         ''' sets the places that the NPC is meant to move to
         
@@ -95,11 +95,11 @@ class NonPlayerCharacter(Character):
         self.move(Vector(x_move, y_move))
 
 
-class PlayerCharacter(Character):
+class PlayerCharacter:
     ''' class handling the player-controlled characters '''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.image_name = "skelet"
+        self.image = Character(image_name = "skelet")
         self.bag = ItemBag()
 
 

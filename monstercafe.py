@@ -19,7 +19,7 @@ from kivy.clock import Clock
 import math
 import random
 
-from characterlib import PlayerCharacter, NonPlayerCharacter
+from characterlib import PlayerCharacter, NonPlayerCharacterImage
 from item import Item
 
 # TODO  Changing Window size messes up gridlayout for floor
@@ -83,17 +83,17 @@ class MonsterCafe(Widget):
         # if the player lets go of a movement, the animation goes to the
         # idle animation
         if (keycode[1] in self.MOVEMENT_KEYS):
-            self.player.idle()       
+            self.player.image.idle()       
 
 
     def _handle_move_key(self, key, modifiers=None):
-        up = (self.player.top - self.player.top_pad 
-              + self.player.MOVEMENT_SPEED)
-        down = self.player.y - self.player.MOVEMENT_SPEED 
-        left = (self.player.x + self.player.left_pad 
-                - self.player.MOVEMENT_SPEED)
-        right = (self.player.right - self.player.right_pad
-                 + self.player.MOVEMENT_SPEED)
+        up = (self.player.image.top - self.player.image.top_pad 
+              + self.player.image.MOVEMENT_SPEED)
+        down = self.player.image.y - self.player.image.MOVEMENT_SPEED 
+        left = (self.player.image.x + self.player.image.left_pad 
+                - self.player.image.MOVEMENT_SPEED)
+        right = (self.player.image.right - self.player.image.right_pad
+                 + self.player.image.MOVEMENT_SPEED)
 
         if key == "down" and down >= 0:
             move = (0, -1)
@@ -106,9 +106,9 @@ class MonsterCafe(Widget):
 
         if modifiers is not None:
             if "shift" in modifiers:
-                move = self.player.sprint(move)
+                move = self.player.image.sprint(move)
         
-        self.player.move(move)
+        self.player.image.move(move)
         self._on_collision(move)
 
 
@@ -118,10 +118,10 @@ class MonsterCafe(Widget):
         '''
         for w in self.children:
             if isinstance(w, Item):
-                if self.player.is_overlapping(w):
+                if self.player.image.is_overlapping(w):
                     self.player.add_item(w.item_name)
                     self.remove_widget(w)
-            if isinstance(w, NonPlayerCharacter):
+            if isinstance(w, NonPlayerCharacterImage):
                 pass
 
 
@@ -135,7 +135,7 @@ class MonsterCafe(Widget):
             last_child.x = random.randint(0, s[0] - last_child.right)
             last_child.y = random.randint(0, s[1] - last_child.top)
         
-        self.add_widget(self.player)
+        self.add_widget(self.player.image)
 
         for w in self.children:
             try:
@@ -154,8 +154,8 @@ class MonsterCafe(Widget):
 
     def update_movement(self, dt):
         for w in self.children:
-            if isinstance(w, NonPlayerCharacter):
-                if not self.player.is_overlapping(w):
+            if isinstance(w, NonPlayerCharacterImage):
+                if not self.player.image.is_overlapping(w):
                     w.update_movement()
 
 
