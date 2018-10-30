@@ -20,6 +20,7 @@ import math
 import random
 
 from characterlib import PlayerCharacter, NonPlayerCharacterImage
+from dialogueboxes import ItemObtainedAlert
 from item import Item
 
 # TODO  Changing Window size messes up gridlayout for floor
@@ -66,6 +67,7 @@ class MonsterCafe(Widget):
         self._keyboard.bind(on_key_up=self._on_keyboard_up)
 
         self.player = PlayerCharacter()
+        self.item_alert = ItemObtainedAlert()
 
 
     def _keyboard_closed(self):
@@ -76,13 +78,17 @@ class MonsterCafe(Widget):
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         if keycode[1] in self.MOVEMENT_KEYS:
             self._handle_move_key(keycode[1], modifiers)
+        if keycode[1] == 'enter':
+            if isinstance(self.children[0], ItemObtainedAlert):
+                self.remove_widget(self.item_alert)
         return True
 
 
     def _on_keyboard_up(self, keyboard, keycode):
         # if the player lets go of a movement, the animation goes to the
         # idle animation
-        if (keycode[1] in self.MOVEMENT_KEYS):
+        if (keycode[1] in self.MOVEMENT_KEYS 
+                and not isinstance(self.children[0], ItemObtainedAlert)):
             self.player.image.idle()       
 
 
@@ -119,8 +125,10 @@ class MonsterCafe(Widget):
         for w in self.children:
             if isinstance(w, Item):
                 if self.player.image.is_overlapping(w):
-                    self.player.add_item(w.item_name)
+                    new_text = self.player.add_item(w.item_name)
                     self.remove_widget(w)
+                    self.add_widget(self.item_alert)
+                    self.item_alert.update_text(new_text)
             if isinstance(w, NonPlayerCharacterImage):
                 pass
 

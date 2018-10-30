@@ -104,5 +104,9 @@ class PlayerCharacter:
 
 
     def add_item(self, item):
-        print("Player obtained item " + item)
         self.bag.add_item(item)
+        return ("Player obtained item " + item)
+
+
+    def open_inventory(self):
+        pass
