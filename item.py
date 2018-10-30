@@ -15,16 +15,14 @@ import random
 from imagelib import OverlappingImage, FloatingImage
 
 class Item(OverlappingImage, FloatingImage):
-    CYCLE_SPEED = 5
-    CYCLE_LENGTH = 10
-    UP = 1
-    DOWN = -1
+    ''' widgets "collectable" by player class '''
+    STRETCH = 2
 
     item_name = StringProperty('')
 
 
 class ItemBag(object):
-
+    ''' container for Item class; use to be expanded later '''
     def __init__(self):
         self.items = []
 

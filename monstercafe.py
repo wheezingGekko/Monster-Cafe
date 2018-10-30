@@ -11,7 +11,8 @@ from kivy.uix.widget import Widget
 from kivy.uix.image import Image
 from kivy.uix.gridlayout import GridLayout
 
-from kivy.properties import NumericProperty, ObjectProperty, StringProperty
+from kivy.properties import (NumericProperty, ObjectProperty, 
+                             StringProperty)
 from kivy.vector import Vector
 from kivy.clock import Clock
 
@@ -22,11 +23,16 @@ from characterlib import PlayerCharacter, NonPlayerCharacter
 from item import Item
 
 # TODO  Changing Window size messes up gridlayout for floor
+#
+# TODO  Consider whether to make the Floor class into one function
+#
+# TODO  Consider to create a tileset rather than dynamically generating it
+#
 # TODO  Adjust how sprinting works
 
 
 class Floor(GridLayout):
-    
+    ''' class handling dynamically generated floor-tiles '''
     TILE_SIZE = 32
 
     def build(self):
@@ -45,12 +51,9 @@ class Floor(GridLayout):
 
 
 class MonsterCafe(Widget):
-    player = ObjectProperty(None)
-    # otherMonsterImage = ObjectProperty(None)
     storeFloor = ObjectProperty(None)
 
-    OTHER_MONSTER_MOVEMENT = [[50, 0], [-50, 0]]
-    OOTHER_MONSTER_MOVEMENT = [[0, -50], [0, 50]]
+    MOVEMENT_KEYS = ['left', 'right', 'up', 'down']
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -62,6 +65,8 @@ class MonsterCafe(Widget):
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
         self._keyboard.bind(on_key_up=self._on_keyboard_up)
 
+        self.player = PlayerCharacter()
+
 
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
@@ -69,6 +74,19 @@ class MonsterCafe(Widget):
 
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        if keycode[1] in self.MOVEMENT_KEYS:
+            self._handle_move_key(keycode[1], modifiers)
+        return True
+
+
+    def _on_keyboard_up(self, keyboard, keycode):
+        # if the player lets go of a movement, the animation goes to the
+        # idle animation
+        if (keycode[1] in self.MOVEMENT_KEYS):
+            self.player.idle()       
+
+
+    def _handle_move_key(self, key, modifiers=None):
         up = (self.player.top - self.player.top_pad 
               + self.player.MOVEMENT_SPEED)
         down = self.player.y - self.player.MOVEMENT_SPEED 
@@ -77,34 +95,27 @@ class MonsterCafe(Widget):
         right = (self.player.right - self.player.right_pad
                  + self.player.MOVEMENT_SPEED)
 
-        move = (0, 0)
-
-        if keycode[1] == "down" and down >= 0:
+        if key == "down" and down >= 0:
             move = (0, -1)
-        elif keycode[1] == "up" and up <= self.height:
+        elif key == "up" and up <= self.height:
             move = (0, 1)
-        elif keycode[1] == "left" and left >= 0:
+        elif key == "left" and left >= 0:
             move = (-1, 0)
-        elif keycode[1] == "right" and right <= self.width:
+        elif key == "right" and right <= self.width:
             move = (1, 0)
 
-        if move != (0, 0):
+        if modifiers is not None:
             if "shift" in modifiers:
                 move = self.player.sprint(move)
-            
-            self.player.move(move)
-            self._on_collision(move)
-
-        return True
-
-
-    def _on_keyboard_up(self, keyboard, keycode):
-        if (keycode[1] == "down" or keycode[1] == "up" or
-            keycode[1] == "left" or keycode[1] == "right"):
-                self.player.idle()       
+        
+        self.player.move(move)
+        self._on_collision(move)
 
 
     def _on_collision(self, move):
+        ''' checks if there is collision between the player widget and
+        any other widget
+        '''
         for w in self.children:
             if isinstance(w, Item):
                 if self.player.is_overlapping(w):
@@ -115,24 +126,22 @@ class MonsterCafe(Widget):
 
 
     def build(self):
-
         # randomly adds apples everywhere
         s = Window.size
-        for i in range(10):
+        for i in range(1):
             i = Item(item_name="Apple")
             self.add_widget(i)
             last_child = self.children[0]
             last_child.x = random.randint(0, s[0] - last_child.right)
             last_child.y = random.randint(0, s[1] - last_child.top)
+        
+        self.add_widget(self.player)
 
         for w in self.children:
             try:
                 w.build()
             except AttributeError:
                 continue
-        
-        # self.otherMonsterImage.set_patrol(self.OTHER_MONSTER_MOVEMENT)
-        # self.ootherMonsterImage.set_patrol(self.OOTHER_MONSTER_MOVEMENT)
 
 
     def update_image(self, dt):
@@ -144,11 +153,10 @@ class MonsterCafe(Widget):
     
 
     def update_movement(self, dt):
-        pass
-        #for w in self.children:
-            #if isinstance(w, NonPlayerCharacter):
-        # if not self.player.is_overlapping(self.ootherMonsterImage):
-        #     self.ootherMonsterImage.updateMovement()
+        for w in self.children:
+            if isinstance(w, NonPlayerCharacter):
+                if not self.player.is_overlapping(w):
+                    w.update_movement()
 
 
 class MonsterCafeApp(App):

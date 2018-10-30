@@ -20,34 +20,10 @@
     keep_ratio: True
 
 <MonsterCafe>:
-    player: monster
-    # otherMonsterImage: otherMonster
-    # ootherMonsterImage: ootherMonster
-    storeFloor: sFloor
+    store_floor: sFloor
     
     Floor:
         id: sFloor
         width: self.parent.width
         height: self.parent.height
         pos_hint: 0,0
-
-    # NonPlayerCharacter:
-    #     id: otherMonster
-    #     pos: self.x, self.y
-    #     right: self.parent.width / 2
-    #     top: (self.parent.height/ 2) + 0.2
-    #     image_name: 'big_demon'
-
-    # NonPlayerCharacter:
-    #     id: ootherMonster
-    #     pos: self.x, self.y
-    #     right: self.parent.width / 2
-    #     top: (self.parent.height/ 2) + 5
-    #     image_name: 'skelet'
-
-    PlayerCharacter:
-        id: monster
-        right: self.parent.width / 2
-        pos_hint: 0, 0
-        image_name: 'big_demon'
-        width: self.width
