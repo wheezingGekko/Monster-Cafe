@@ -46,18 +46,26 @@ class Character(LoopingImage, OverlappingImage):
 
 class NonPlayerCharacterImage(Character):
     ''' class handling all non-player controlled characters' animation '''
-    def set_patrol(self, movement_list):
+    def __init__(self, name, movement_list=None, **kwargs):
+        super().__init__(**kwargs)
+        self.name = name
+        if movement_list is not None:
+            self.MOVEMENT_LIST = movement_list
+        else:
+            self.MOVEMENT_LIST = []
+
+        self._move_index = 1
+        # the amount of moves in a particular axis that the NPC expects
+        self._x, self._y = 0, 0
+    
+    def set_patrol(self, movement_list=None):
         ''' sets the places that the NPC is meant to move to
         
         Keyword arguments:
         movement_list   --  a list of coordinates that the character will
                             move to in order of the elements
         '''
-        self.MOVEMENT_LIST = movement_list
-        self._move_index = 1
-
-        # the amount of moves in a particular axis that the NPC expects
-        self._x, self._y = 0, 0
+        pass
 
 
     def update_movement(self):
@@ -95,6 +103,11 @@ class NonPlayerCharacterImage(Character):
         self.move(Vector(x_move, y_move))
 
 
+    def talk(self):
+        print ("Hi there, I'm " + self.name)
+        return True
+
+
 class PlayerCharacter:
     ''' class handling the player-controlled characters '''
     def __init__(self, **kwargs):
@@ -105,7 +118,6 @@ class PlayerCharacter:
 
     def add_item(self, item):
         self.bag.add_item(item)
-        return ("Player obtained item " + item)
 
 
     def open_inventory(self):

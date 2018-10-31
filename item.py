@@ -20,6 +20,10 @@ class Item(OverlappingImage, FloatingImage):
 
     item_name = StringProperty('')
 
+    def __init__(self, referred_name, **kwargs):
+        super().__init__(**kwargs)
+        self.name = referred_name
+
 
 class ItemBag(object):
     ''' container for Item class; use to be expanded later '''

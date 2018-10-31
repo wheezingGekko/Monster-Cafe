@@ -15,12 +15,15 @@ from kivy.properties import (NumericProperty, ObjectProperty,
                              StringProperty)
 from kivy.vector import Vector
 from kivy.clock import Clock
+from kivy.event import *
 
 import math
 import random
+from functools import partial
 
 from characterlib import PlayerCharacter, NonPlayerCharacterImage
-from dialogueboxes import ItemObtainedAlert
+from dialogueboxes import (DialogueBox, ItemObtainedAlert, 
+                           CharacterSpeechBox)
 from item import Item
 
 # TODO  Changing Window size messes up gridlayout for floor
@@ -55,6 +58,8 @@ class MonsterCafe(Widget):
     storeFloor = ObjectProperty(None)
 
     MOVEMENT_KEYS = ['left', 'right', 'up', 'down']
+    DISMISS_KEY = 'enter'
+    INTERACT_KEY = 'e'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -68,6 +73,10 @@ class MonsterCafe(Widget):
 
         self.player = PlayerCharacter()
         self.item_alert = ItemObtainedAlert()
+        self.speech_box = CharacterSpeechBox()
+        self.interact_function = ""
+
+        self.register_event_type("on_item_obtained")
 
 
     def _keyboard_closed(self):
@@ -76,11 +85,15 @@ class MonsterCafe(Widget):
 
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        if keycode[1] in self.MOVEMENT_KEYS:
-            self._handle_move_key(keycode[1], modifiers)
-        if keycode[1] == 'enter':
-            if isinstance(self.children[0], ItemObtainedAlert):
-                self.remove_widget(self.item_alert)
+        if isinstance(self.children[0], DialogueBox):
+            if keycode[1] == self.DISMISS_KEY:
+                self.remove_widget(self.children[0])
+        else:
+            if keycode[1] in self.MOVEMENT_KEYS:
+                self._handle_move_key(keycode[1], modifiers)
+            if (keycode[1] == self.INTERACT_KEY
+                    and self.interact_function != ""):
+                self.interact_function()
         return True
 
 
@@ -125,23 +138,51 @@ class MonsterCafe(Widget):
         for w in self.children:
             if isinstance(w, Item):
                 if self.player.image.is_overlapping(w):
-                    new_text = self.player.add_item(w.item_name)
-                    self.remove_widget(w)
-                    self.add_widget(self.item_alert)
-                    self.item_alert.update_text(new_text)
+                    self.dispatch('on_item_obtained', w)
             if isinstance(w, NonPlayerCharacterImage):
-                pass
+                if self.player.image.is_overlapping(w):
+                    self.update_text_box(w)
+                    self.interact_function = self.show_text_box
+                    break
+            else:
+                self.interact_function = ""
 
+
+    def on_item_obtained(self, w):
+        pass
+
+
+    def on_item_obtained_cb(self, dt, w):
+        ''' callback when an item has been obtained by the player '''
+        self.player.add_item(w)
+        self.remove_widget(w)
+        self.add_widget(self.item_alert)
+        self.item_alert.update_text(w.name)
+
+    
+    def update_text_box(self, w):
+        ''' updates text of the dialogue box '''
+        self.speech_box.update_text(w.name, "Hey there!")
+
+
+    def show_text_box(self):
+        ''' displays dialogue of character on screen '''
+        self.add_widget(self.speech_box)
+
+
+    def _bind(self):
+        ''' bind self and children to respective dispatchers '''
+        self.bind(on_item_obtained=self.on_item_obtained_cb)
+        
 
     def build(self):
-        # randomly adds apples everywhere
-        s = Window.size
-        for i in range(1):
-            i = Item(item_name="Apple")
-            self.add_widget(i)
-            last_child = self.children[0]
-            last_child.x = random.randint(0, s[0] - last_child.right)
-            last_child.y = random.randint(0, s[1] - last_child.top)
+        # randomly adds NPC everywhere
+        for i in range(10):
+            n = NonPlayerCharacterImage(
+                name="big_demon" + str(i), image_name="big_demon")
+            #i = Item("apple", item_name="Apple")
+            self.add_widget(n)
+            self._randomly_place(self.children[0])
         
         self.add_widget(self.player.image)
 
@@ -150,6 +191,14 @@ class MonsterCafe(Widget):
                 w.build()
             except AttributeError:
                 continue
+
+        self._bind()
+
+
+    def _randomly_place(self, w):
+        s = Window.size
+        w.x = random.randint(0, s[0] - w.right)
+        w.y = random.randint(0, s[1] - w.top)
 
 
     def update_image(self, dt):

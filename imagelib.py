@@ -13,6 +13,9 @@ from debugger import Debug
 #
 # TODO  Possibly make an all-around function encapsulating the search for
 #       the non-transparent pixel beginning
+#
+# TODO  Increase hit-box for collision when interacting with characters vs
+#       interacting with objects
 
 
 class OverlappingImage(Image):
