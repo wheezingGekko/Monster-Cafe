@@ -4,6 +4,10 @@
 
 <OverlappingImage>:
     keep_data: True
+    x: self.x
+    y: self.y
+    right: self.right
+    top: self.top
 
 <LoopingImage>:
     pos: self.x, self.y
@@ -15,7 +19,7 @@
     image_state: "idle"
     source: 'Images\\chars\\{}\\{}_{}_anim_f{}.png'.format(self.image_name, self.image_name, self.image_state, self.image_num)
     width: self.width
-    size_hint_y: None
+    height: self.height
     allow_stretch: True
     keep_ratio: True
 

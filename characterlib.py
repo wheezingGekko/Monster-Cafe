@@ -58,6 +58,7 @@ class NonPlayerCharacterImage(Character):
         # the amount of moves in a particular axis that the NPC expects
         self._x, self._y = 0, 0
     
+    
     def set_patrol(self, movement_list=None):
         ''' sets the places that the NPC is meant to move to
         

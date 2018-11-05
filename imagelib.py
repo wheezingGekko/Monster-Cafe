@@ -3,6 +3,7 @@ kivy.require('1.10.1')
 
 from kivy.uix.image import Image
 from kivy.properties import NumericProperty, StringProperty
+from kivy.vector import Vector
 
 import math
 
@@ -238,17 +239,22 @@ class OverlappingImage(Image):
     def build(self):
         self._init_transparency()
         self.width = self._coreimage.width * self.STRETCH
+        self.height = self._coreimage.height * self.STRETCH
 
 
-    def is_overlapping(self, widget):
-        ''' checks if it's overlapping another widget 
+    def get_overlapping_pixels(self, widget):
+        ''' retrieves the pixels at which the current widget and a second
+        widget are overlapping
+
+        returns None if they are not overlapping
         
         Keyword arguments:
         widget  -- the widget to compare to
         '''
         # prevent calculation if the widgets are not in the approximate
         # area of one another
-        if (self._in_widget_horizontal(widget) and self._in_widget_vertical(widget)):
+        if (self._in_widget_horizontal(widget) 
+                and self._in_widget_vertical(widget)):
             h_range, h_step = self._calculate_range(
                 widget, 'width', 'x', 'right')
             v_range, v_step = self._calculate_range(
@@ -281,10 +287,33 @@ class OverlappingImage(Image):
                                 h_pixel[0], v_pixel[0])[-1] != 0 
                             and widget._coreimage.read_pixel(
                                 h_pixel[1], v_pixel[1])[-1] != 0):
-                        return True
+                        return (h_pixel, v_pixel)
         
+        return None
+
+    
+    def is_overlapping_hitbox(self, widget):
+        ''' checks if it's overlapping another widget's "hitbox"
+        
+        Keyword arguments:
+        widget  -- the widget to compare to
+        '''
+        if (self._in_widget_horizontal(widget) 
+                and self._in_widget_vertical(widget)):
+            return True
+
+    
+    def is_overlapping(self, widget):
+        ''' checks if it's overlapping another widget 
+        
+        Keyword arguments:
+        widget  -- the widget to compare to
+        '''
+        if self.get_overlapping_pixels(widget) is not None:
+            return True
         return False
 
+        
 
 class LoopingImage(Image):
     ''' Class of animations composed by looping images '''
