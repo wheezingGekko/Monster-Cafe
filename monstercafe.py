@@ -142,7 +142,7 @@ class MonsterCafe(Widget):
                 if self.player.image.is_overlapping(w):
                     self.dispatch('on_item_obtained', w)
             if isinstance(w, NonPlayerCharacterImage):
-                if self.player.image.is_overlapping_hitbox(w):
+                if w.is_overlapping(self.player.image):
                     self.update_text_box(w)
                     self.interact_function = self.show_text_box
                     break
@@ -179,7 +179,7 @@ class MonsterCafe(Widget):
 
     def build(self):
         # randomly adds NPC everywhere
-        for i in range(1):
+        for i in range(10):
             n = NonPlayerCharacterImage(
                 name="big_demon" + str(i), image_name="big_demon")
             #n = Item("apple", item_name="Apple")

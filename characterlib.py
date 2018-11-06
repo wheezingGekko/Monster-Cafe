@@ -19,6 +19,10 @@ class Character(LoopingImage, OverlappingImage):
     image_state = StringProperty('')
 
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
     def idle(self):
         self.image_state = "idle"
 
@@ -46,6 +50,8 @@ class Character(LoopingImage, OverlappingImage):
 
 class NonPlayerCharacterImage(Character):
     ''' class handling all non-player controlled characters' animation '''
+    HITBOX = 8
+
     def __init__(self, name, movement_list=None, **kwargs):
         super().__init__(**kwargs)
         self.name = name
@@ -102,6 +108,10 @@ class NonPlayerCharacterImage(Character):
 
         # then we move using the calculated movement
         self.move(Vector(x_move, y_move))
+
+
+    def is_overlapping(self, widget):
+        return super().is_overlapping(widget, self.HITBOX)
 
 
     def talk(self):

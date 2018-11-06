@@ -85,16 +85,16 @@ class OverlappingImage(Image):
         return self._coreimage.height - true_top
 
 
-    def _in_widget_horizontal(self, widget):
+    def _in_widget_horizontal(self, widget, leeway):
         ''' returns true or false if within a widget's x-axis 
         
         Keyword arguments:
         widget  -- the widget to compare to
         '''
-        widget_left = widget.x + widget.left_pad
-        widget_right = widget.right - widget.right_pad
-        self_left = self.x + self.left_pad
-        self_right = self.right - self.right_pad
+        widget_left = widget.x + widget.left_pad - leeway
+        widget_right = widget.right - widget.right_pad + leeway
+        self_left = self.x + self.left_pad - leeway
+        self_right = self.right - self.right_pad + leeway
 
         overlapping_right = widget_left <= self_left < widget_right
         overlapping_left = widget_left <= self_right < widget_right
@@ -104,136 +104,22 @@ class OverlappingImage(Image):
         return (overlapping_right or overlapping_left or overlapping_on)
 
 
-    def _in_widget_vertical(self, widget):
+    def _in_widget_vertical(self, widget, leeway):
         ''' returns true or false if within a widget's y-axis 
 
         Keyword arguments:
         widget  -- the widget to compare to
         '''
-        widget_top = widget.top - widget.top_pad
-        self_top = self.top - self.top_pad
+        widget_y = widget.y - leeway
+        widget_top = widget.top - widget.top_pad + leeway
+        self_y = self.y - leeway
+        self_top = self.top - self.top_pad + leeway
 
-        overlapping_above = widget.y <= self.y < widget_top
-        overlapping_below = widget.y <= self_top < widget_top
-        overlapping_on = (self.y < widget.y and self_top > widget_top)
+        overlapping_above = widget_y <= self_y < widget_top
+        overlapping_below = widget_y <= self_top < widget_top
+        overlapping_on = (self_y < widget_y and self_top > widget_top)
 
         return (overlapping_above or overlapping_below or overlapping_on)
-
-
-    def _calculate_range(self, widget, axis, mini, maxa):
-        ''' In looking at overlapping images, we retrieve the overlapping
-        points of the widgets. We retrieve the range of points that
-        could possible contain colored pixels for both this widget
-        and the other widget
-
-        Keyword arguments:
-        widget  -- the widget to compare to
-        axis    -- the desired axis of comparison, eg. height or width
-        mini    -- the minimum point of the axis, eg. y or x
-        maxa    -- the maximum point of the axis, eg. top or right 
-        '''
-        # retrieve the values of _coreimage because we can only
-        # retrieve pixel color from the original image
-        try:
-            self_axis = getattr(self, axis)
-            self_core_axis = getattr(self._coreimage, axis)
-            widget_core_axis = getattr(widget._coreimage, axis)
-
-            self_min = getattr(self, mini)
-            self_max = getattr(self, maxa)
-            widget_min = getattr(widget, mini)
-            widget_max = getattr(widget, maxa)
-        except AttributeError:
-            Debug.debugPrint(self, "_calculate_range", "Attribute Error")
-            return None
-
-        
-        # the range must be from the other widget's innermost overlapping
-        # pixel to the outermost overlapping pixel
-        #       () <- this widget     [] <- the other widget
-        
-        # this widget is on the higher bound :: eg. [  (**]  )
-        if self_min > widget_min:
-            start = 0
-            end = widget_max - self_min
-            step = 1
-        # this widget is on the lower bound  :: eg. (  [**)  ]
-        elif self_min < widget_min:
-            start = self_max - widget_min
-            end = -1
-            step = -1
-        # return on the most optimal situation:
-        # when the widgets' axes are directly on top of each other
-        else:
-            return [math.ceil(widget_core_axis/2)], 0
-
-        # otherwise, we account for the stretch of the image when creating
-        # a range of pixels to iterate over
-        # removing the padding for height only works when subtracting
-        if axis == "height":
-            # TODO  Remove this hack
-            axis_stretch = math.floor((self_axis - self_core_axis)/1.4)
-            if step == -1:
-                start -= axis_stretch
-            if step == 1:
-                end -= axis_stretch
-        # otherwise, divide out the padding
-        if axis == "width":
-            axis_stretch = self._stretch + widget._stretch
-            if step == -1:
-                start /= axis_stretch
-            if step == 1:
-                end /= axis_stretch
-
-        return range(math.ceil(start), math.floor(end), step), step
-
-
-    def _calculate_axis_pixels(self, widget, axis, step, i):
-        '''
-        [  ( * ]  )
-        While looking at overlapping widgets, we calculate which pixels we
-        check for transparency. When widgets are overlapping, the desired 
-        pixel of this widget and the other widget will be located on 
-        opposite sides of its respective widget
-        
-        eg. if our widget is colliding with the other widget from the
-            right, a pixel to the left of this widget will be on the 
-            other widget's right 
-        
-        Keyword arguments:
-        widget  -- the widget to compare to
-        axis    -- the desired axis of comparison, eg. height or width
-        step    -- whether we are incrementing or decrementing on the axis
-        i       -- the starting point of the axis
-        '''
-        try:
-            self_axis = getattr(self._coreimage, axis)
-            widget_axis = getattr(widget._coreimage, axis)
-        except AttributeError:
-            Debug.debugPrint(self, "_calculate_axis_pixels", 
-                             "Attribute Error")
-            return None
-
-        self_axis_pixel, widget_axis_pixel = i, i
-
-        # if we are incrementing pixels to check for transparency, likely 
-        # the other widget is on the higher bound
-        if step == 1:
-            widget_axis_pixel = widget_axis - widget_axis_pixel
-        # if we are decrementing pixels to check for transparency, likely 
-        # this widget is on the higher bound
-        elif step == -1:
-            self_axis_pixel = self_axis - self_axis_pixel
-
-        # we return no pixel if it isn't within the bounds of either image's 
-        # coordinates
-        if (widget_axis_pixel >= widget_axis
-                or widget_axis_pixel < 0 
-                or self_axis_pixel >= self_axis 
-                or self_axis_pixel < 0):
-            return None
-        
-        return self_axis_pixel, widget_axis_pixel
 
 
     def build(self):
@@ -241,79 +127,17 @@ class OverlappingImage(Image):
         self.width = self._coreimage.width * self.STRETCH
         self.height = self._coreimage.height * self.STRETCH
 
-
-    def get_overlapping_pixels(self, widget):
-        ''' retrieves the pixels at which the current widget and a second
-        widget are overlapping
-
-        returns None if they are not overlapping
-        
-        Keyword arguments:
-        widget  -- the widget to compare to
-        '''
-        # prevent calculation if the widgets are not in the approximate
-        # area of one another
-        if (self._in_widget_horizontal(widget) 
-                and self._in_widget_vertical(widget)):
-            h_range, h_step = self._calculate_range(
-                widget, 'width', 'x', 'right')
-            v_range, v_step = self._calculate_range(
-                widget, 'height', 'y', 'top')
-             
-            for h in h_range:
-                # we check if the retrieved pixels in the horizontal axis
-                # are within the overlapping points of both widgets
-                h_pixel = self._calculate_axis_pixels(
-                    widget, 'width', h_step, h)
-                
-                # if not, we skip these pixels
-                if h_pixel is None:
-                    continue
-
-                for v in v_range:
-                    # we check if the retrieved pixels in the vertical 
-                    # axis are within the overlapping points of both 
-                    # widgets
-                    v_pixel = self._calculate_axis_pixels(
-                        widget, 'height', v_step, v)
-
-                    # if not, we skip these pixels
-                    if v_pixel is None:
-                        continue
-
-                    # we check if the opposite sides of the images
-                    # have colored pixels
-                    if (self._coreimage.read_pixel(
-                                h_pixel[0], v_pixel[0])[-1] != 0 
-                            and widget._coreimage.read_pixel(
-                                h_pixel[1], v_pixel[1])[-1] != 0):
-                        return (h_pixel, v_pixel)
-        
-        return None
-
     
-    def is_overlapping_hitbox(self, widget):
+    def is_overlapping(self, widget, leeway=0):
         ''' checks if it's overlapping another widget's "hitbox"
         
         Keyword arguments:
         widget  -- the widget to compare to
         '''
-        if (self._in_widget_horizontal(widget) 
-                and self._in_widget_vertical(widget)):
+        if (self._in_widget_horizontal(widget, leeway) 
+                and self._in_widget_vertical(widget, leeway)):
             return True
 
-    
-    def is_overlapping(self, widget):
-        ''' checks if it's overlapping another widget 
-        
-        Keyword arguments:
-        widget  -- the widget to compare to
-        '''
-        if self.get_overlapping_pixels(widget) is not None:
-            return True
-        return False
-
-        
 
 class LoopingImage(Image):
     ''' Class of animations composed by looping images '''
